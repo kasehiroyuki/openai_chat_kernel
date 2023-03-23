@@ -1,0 +1,13 @@
+[project]
+name = "openai_chat_kernel"
+dynamic = [
+    "version",
+]
+description = "Simple OpenAI Chat Kernel for Jupyter"
+dependencies = [
+    "ipykernel",
+    "jupyter_client",
+    "openai",
+]
+
+
