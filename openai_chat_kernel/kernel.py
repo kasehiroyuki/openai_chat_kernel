@@ -24,30 +24,58 @@ class OpenAIChatKernel(Kernel):
     def do_execute(self, code, silent, store_history = True, user_expression = None,
                    allow_stdin = False, *, cell_id = None):
 
+        if not silent:
+            stream_content = { 'data':
+                              { "text/markdown": "waiting API response..." },
+                              "metadata": {}, "transient": { "display_id": cell_id }
+                              }
+            self.send_response(self.iopub_socket, 'display_data', stream_content)
+
         self.messages.append(
             { "role": "user", "content": code }
         )
 
-        res = openai.ChatCompletion.create(
-            model = "gpt-3.5-turbo",
-            messages = self.messages
-        )
+        try:
+            resp = openai.ChatCompletion.create(
+                model = "gpt-3.5-turbo",
+                messages = self.messages,
+                stream = True,
+                request_timeout = 10.0
+            )
 
-        text = res['choices'][0]['message']['content'].encode().decode()
+            text = ""
 
-        self.messages.append(
-            { 'role': 'assistant', 'content': text }
-        )
+            for chunk in resp:
+                content = chunk['choices'][0]['delta'].get('content')
 
-        if not silent:
+                if not content:
+                    continue;
+
+                delta = content.encode().decode() 
+                text += delta
+
+                if not silent:
+                    stream_content = { 'data':
+                                      { "text/markdown": text },
+                                      "metadata": {}, "transient": { "display_id": cell_id }
+                                      }
+                    self.send_response(self.iopub_socket, 'update_display_data', stream_content)
+
+            self.messages.append(
+                { 'role': 'assistant', 'content': text }
+            )
+
+        except Exception as e:
+            text = "Exception: " + e.args[0]
             stream_content = { 'data':
                               { "text/markdown": text, "text/plain": text },
-                              "metadata": {}, "transient": {}
+                              "metadata": {}, "transient": { }
                               }
             self.send_response(self.iopub_socket, 'display_data', stream_content)
+            self.messages.pop()
 
         return { 'status': 'ok',
                 'execution_count': self.execution_count,
                 'payload': [],
-                'user_expressios': {}
+                'user_expressions': {}
                 }
