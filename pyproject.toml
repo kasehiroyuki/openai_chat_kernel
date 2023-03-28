@@ -1,9 +1,11 @@
 [project]
 name = "openai_chat_kernel"
-dynamic = [
-    "version",
+version = "0.1.0"
+description = "OpenAI ChatGPT Jupyter Kernel"
+readme = "README.md"
+authors = [
+    { name = "KASE Hiroyuki", email = "kase@sapphire-eng.jp" },
 ]
-description = "Simple OpenAI Chat Kernel for Jupyter"
 dependencies = [
     "ipykernel",
     "jupyter_client",
