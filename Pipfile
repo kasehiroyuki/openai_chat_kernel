@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-openai-chat-kernel = {path = "."}
+openai-chat-kernel = {path = ".", editable = true}
 
 [dev-packages]
 
