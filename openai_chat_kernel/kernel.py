@@ -55,11 +55,20 @@ class OpenAIChatKernel(Kernel):
                 text += delta
 
                 if not silent:
+                    # To reduce screen flickering, the data is displayed as plain text while streaming.
                     stream_content = { 'data':
-                                      { "text/markdown": text },
+                                      { "text/plain": text },
                                       "metadata": {}, "transient": { "display_id": cell_id }
                                       }
                     self.send_response(self.iopub_socket, 'update_display_data', stream_content)
+
+            if not silent:
+                # Send as Markdown format at the end.
+                stream_content = { 'data':
+                                  { "text/markdown": text },
+                                  "metadata": {}, "transient": { "display_id": cell_id }
+                                  }
+                self.send_response(self.iopub_socket, 'update_display_data', stream_content)
 
             self.messages.append(
                 { 'role': 'assistant', 'content': text }
