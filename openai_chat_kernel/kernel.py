@@ -40,7 +40,7 @@ class OpenAIChatKernel(Kernel):
                 model = "gpt-3.5-turbo",
                 messages = self.messages,
                 stream = True,
-                request_timeout = 10.0
+                request_timeout = 30.0
             )
 
             text = ""
