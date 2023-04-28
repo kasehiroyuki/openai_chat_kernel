@@ -1,8 +1,15 @@
 import os
+from enum import Enum
 from ipykernel.kernelbase import Kernel
 import openai
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+class MessageRole(Enum):
+    USER = "user"
+    SYSTEM = "system"
+    ASSISTANT = "assistant"
 
 
 class OpenAIChatKernel(Kernel):
@@ -21,6 +28,18 @@ class OpenAIChatKernel(Kernel):
         super().__init__(**kwargs)
         self.messages = []
 
+    def __filter_role_magic(self, code):
+        code_lines = []
+        role = MessageRole.USER
+
+        for line in code.splitlines():
+            if line.startswith("%%system"):
+                role = MessageRole.SYSTEM
+            else:
+                code_lines.append(line)
+
+        return role, "\n".join(code_lines)
+
     def do_execute(
         self,
         code,
@@ -29,8 +48,29 @@ class OpenAIChatKernel(Kernel):
         user_expression=None,
         allow_stdin=False,
         *,
-        cell_id=None
+        cell_id=None,
     ):
+        code = code.strip()
+        role, code = self.__filter_role_magic(code)
+
+        self.messages.append({"role": role.value, "content": code})
+
+        if role == MessageRole.SYSTEM:
+            if not silent:
+                stream_content = {
+                    "data": {"text/markdown": f"role: system"},
+                    "metadata": {},
+                    "transient": {"display_id": cell_id},
+                }
+                self.send_response(self.iopub_socket, "display_data", stream_content)
+
+            return {
+                "status": "ok",
+                "execution_count": self.execution_count,
+                "payload": [],
+                "user_expressions": {},
+            }
+
         if not silent:
             stream_content = {
                 "data": {"text/markdown": "waiting API response..."},
@@ -38,8 +78,6 @@ class OpenAIChatKernel(Kernel):
                 "transient": {"display_id": cell_id},
             }
             self.send_response(self.iopub_socket, "display_data", stream_content)
-
-        self.messages.append({"role": "user", "content": code})
 
         try:
             resp = openai.ChatCompletion.create(

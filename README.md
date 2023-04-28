@@ -22,6 +22,19 @@ To use the ChatGPT Jupyter kernel module, create a new notebook and select "Open
 
 Once selected, you can start communicating with the ChatGPT API through the Jupyter notebook.
 
+## Magic Commands
+
+### `%%system` 
+
+To treat the contents of a cell as a system role message, add a line with `%%system` at the beginning of the cell.
+
+Input example:
+```
+%%system
+You are an assistant that speaks like Shakespeare.
+```
+
+
 ## Contributing
 
 If you'd like to contribute to this project, please feel free to submit a pull request or open an issue.
