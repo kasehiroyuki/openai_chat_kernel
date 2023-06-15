@@ -34,6 +34,12 @@ Input example:
 You are an assistant that speaks like Shakespeare.
 ```
 
+### `%model`
+
+To change the model from gpt-3.5-turbo(default), use `%model` magic command as follows:
+```
+%model gpt-3.5-turbo-16k
+```
 
 ## Contributing
 

@@ -27,6 +27,7 @@ class OpenAIChatKernel(Kernel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.messages = []
+        self.model = "gpt-3.5-turbo"
 
     def __filter_role_magic(self, code):
         code_lines = []
@@ -40,6 +41,16 @@ class OpenAIChatKernel(Kernel):
 
         return role, "\n".join(code_lines)
 
+    def __filter_model_magic(self, code):
+        new_model = "gpt-3.5-turbo"
+
+        for line in code.splitlines():
+            if line.startswith("%model"):
+                new_model = line.split()[1]
+                return True, new_model
+
+        return False, new_model
+
     def do_execute(
         self,
         code,
@@ -51,8 +62,29 @@ class OpenAIChatKernel(Kernel):
         cell_id=None,
     ):
         code = code.strip()
-        role, code = self.__filter_role_magic(code)
 
+        # check %model magic
+        is_new_model, new_model = self.__filter_model_magic(code)
+        if is_new_model:
+            self.model = new_model
+
+            if not silent:
+                stream_content = {
+                    "data": {"text/markdown": f"model: {self.model}"},
+                    "metadata": {},
+                    "transient": {"display_id": cell_id},
+                }
+                self.send_response(self.iopub_socket, "display_data", stream_content)
+
+            return {
+                "status": "ok",
+                "execution_count": self.execution_count,
+                "payload": [],
+                "user_expressions": {},
+            }
+
+        # check role(%%system) magic
+        role, code = self.__filter_role_magic(code)
         self.messages.append({"role": role.value, "content": code})
 
         if role == MessageRole.SYSTEM:
@@ -81,7 +113,7 @@ class OpenAIChatKernel(Kernel):
 
         try:
             resp = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model=self.model,
                 messages=self.messages,
                 stream=True,
                 request_timeout=30.0,
