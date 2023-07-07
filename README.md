@@ -2,6 +2,9 @@
 
 This repository contains a Jupyter kernel module that utilizes the OpenAI ChatGPT API to provide a chatbot-like interface within Jupyter notebooks.
 
+## Example
+![Example](example.png "Example")
+
 ## Installation
 
 To install the Jupyter Kernel Module, you can use pip:
